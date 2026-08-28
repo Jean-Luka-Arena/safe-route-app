@@ -1,5 +1,5 @@
 import pytest
-from atributos_calle import AtributosCalle
+from app.tda_grafo.atributos_calle import AtributosCalle
 
 # ---------- CREACION ----------
 

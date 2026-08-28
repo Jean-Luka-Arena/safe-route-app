@@ -1,5 +1,5 @@
 import pytest
-from grafo_ciudad import GrafoCiudad
+from app.tda_grafo.grafo_ciudad import GrafoCiudad
 
 # ---------- FIXTURES ----------
 

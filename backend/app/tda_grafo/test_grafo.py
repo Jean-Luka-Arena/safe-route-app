@@ -1,6 +1,5 @@
 import pytest
-from grafo import Grafo
-
+from app.tda_grafo.grafo import Grafo
 
 # ---------- FIXTURES ----------
 

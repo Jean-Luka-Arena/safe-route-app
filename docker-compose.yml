@@ -1,0 +1,17 @@
+services:
+  db:
+    image: postgres:16
+    container_name: safe_route_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: safe_route
+      POSTGRES_USER: safe_route
+      POSTGRES_PASSWORD: safe_route
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+ 
+volumes:
+  db_data:
+ 

@@ -2,20 +2,15 @@ import heapq
 
 
 def dijkstra(ciudad, origen, destino, funcion_costo):
-    """Calcula el camino de costo mínimo entre origen y destino en una
+    """Calcula el camino de costo minimo entre origen y destino en una
     GrafoCiudad, usando el algoritmo de Dijkstra.
-
-    Es agnóstico al criterio de optimización: el significado de "costo"
-    de cada calle lo define quien llama, a través de funcion_costo. Esto
-    permite reutilizar el mismo algoritmo para calcular la ruta más
-    corta, más segura o balanceada, sin duplicar código (DRY).
 
     Args:
         ciudad: instancia de GrafoCiudad.
         origen: ubicación de origen.
         destino: ubicación de destino.
-        funcion_costo: función que recibe un AtributosCalle y devuelve
-            un número >= 0 (el costo de esa calle).
+        funcion_costo: funcion que recibe un AtributosCalle y devuelve
+            un numero >= 0 (el costo de esa calle).
 
     Returns:
         Una tupla (camino, costo_total):

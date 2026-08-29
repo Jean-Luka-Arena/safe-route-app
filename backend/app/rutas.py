@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException, Query
 
 from app.repositories.ciudad_repository import obtener_ciudad
 from app.services.motor_rutas import calcular_ruta, CRITERIOS_VALIDOS
+from app.tda_grafo.excepciones import UbicacionInexistente
 
 router = APIRouter()
 
@@ -20,9 +21,7 @@ def calcular_ruta_endpoint(
         None, description="Peso del riesgo (solo si criteria=balanceada)"
     ),
 ):
-    """Calcula una ruta entre origin y destination segun el criterio
-    pedido (punto 8 de la consigna: GET /route).
-    """
+
     ciudad = obtener_ciudad()
 
     try:
@@ -30,10 +29,8 @@ def calcular_ruta_endpoint(
             ciudad, origin, destination, criterio=criteria, alpha=alpha, beta=beta
         )
     except ValueError as error:
-        # criterio invalido, o balanceada sin alpha/beta: error del cliente
         raise HTTPException(status_code=400, detail=str(error))
-    except Exception as error:
-        # origen o destino inexistentes en la ciudad
+    except UbicacionInexistente as error:
         raise HTTPException(status_code=404, detail=str(error))
 
     if not resultado.existe_camino():

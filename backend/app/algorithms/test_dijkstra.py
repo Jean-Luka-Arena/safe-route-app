@@ -1,6 +1,7 @@
 import pytest
 from app.tda_grafo.grafo_ciudad import GrafoCiudad
 from app.algorithms.dijkstra import dijkstra
+from app.tda_grafo.excepciones import UbicacionInexistente
 
 # ---------- FUNCIONES DE COSTO DE PRUEBA ----------
 
@@ -77,12 +78,12 @@ def test_origen_igual_a_destino(ciudad_lineal):
 
 
 def test_ubicacion_origen_inexistente(ciudad_lineal):
-    with pytest.raises(Exception):
+    with pytest.raises(UbicacionInexistente):
         dijkstra(ciudad_lineal, "Z", "A", costo_por_distancia)
 
 
 def test_ubicacion_destino_inexistente(ciudad_lineal):
-    with pytest.raises(Exception):
+    with pytest.raises(UbicacionInexistente):
         dijkstra(ciudad_lineal, "A", "Z", costo_por_distancia)
 
 

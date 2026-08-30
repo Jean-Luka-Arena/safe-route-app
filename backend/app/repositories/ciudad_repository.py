@@ -1,18 +1,22 @@
+from app.db.models import Ubicacion, Conexion
 from app.tda_grafo.grafo_ciudad import GrafoCiudad
 
 
-def obtener_ciudad():
-    """Devuelve la GrafoCiudad que usa la API."""
+def obtener_ciudad(sesion):
+    """Arma un GrafoCiudad leyendo ubicaciones y conexiones desde la
+    base de datos.
+    """
     ciudad = GrafoCiudad()
 
-    for ubicacion in ["A", "B", "C", "D", "E"]:
-        ciudad.agregar_ubicacion(ubicacion)
+    for ubicacion in sesion.query(Ubicacion).all():
+        ciudad.agregar_ubicacion(ubicacion.id)
 
-    ciudad.agregar_calle("A", "B", distancia=500, seguridad=8)
-    ciudad.agregar_calle("B", "C", distancia=300, seguridad=4)
-    ciudad.agregar_calle("A", "C", distancia=900, seguridad=9)
-    ciudad.agregar_calle("C", "D", distancia=400, seguridad=6)
-    ciudad.agregar_calle("B", "D", distancia=700, seguridad=9)
-    ciudad.agregar_calle("D", "E", distancia=200, seguridad=7)
+    for conexion in sesion.query(Conexion).all():
+        ciudad.agregar_calle(
+            conexion.origen_id,
+            conexion.destino_id,
+            distancia=conexion.distancia,
+            seguridad=conexion.nivel_seguridad,
+        )
 
     return ciudad

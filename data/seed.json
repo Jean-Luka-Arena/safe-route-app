@@ -1,0 +1,17 @@
+{
+    "ubicaciones": [
+      {"id": 1, "latitud": -34.6037, "longitud": -58.3816},
+      {"id": 2, "latitud": -34.6083, "longitud": -58.3712},
+      {"id": 3, "latitud": -34.6157, "longitud": -58.3627},
+      {"id": 4, "latitud": -34.6208, "longitud": -58.3739},
+      {"id": 5, "latitud": -34.6265, "longitud": -58.3820}
+    ],
+    "conexiones": [
+      {"origen_id": 1, "destino_id": 2, "distancia": 500, "nivel_seguridad": 8},
+      {"origen_id": 2, "destino_id": 3, "distancia": 300, "nivel_seguridad": 4},
+      {"origen_id": 1, "destino_id": 3, "distancia": 900, "nivel_seguridad": 9},
+      {"origen_id": 3, "destino_id": 4, "distancia": 400, "nivel_seguridad": 6},
+      {"origen_id": 2, "destino_id": 4, "distancia": 700, "nivel_seguridad": 9},
+      {"origen_id": 4, "destino_id": 5, "distancia": 200, "nivel_seguridad": 7}
+    ]
+  }

@@ -1,15 +1,17 @@
-from sqlalchemy import Float, ForeignKey, Integer
+import datetime
+from datetime import timezone
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
 
 
+def _ahora_utc():
+    return datetime.datetime.now(timezone.utc)
+
+
 class Ubicacion(Base):
-    """una ubicacion/interseccion de la ciudad.
-
-    id funciona como identificador de vertice del grafo
-    """
-
     __tablename__ = "ubicaciones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
@@ -45,4 +47,26 @@ class Conexion(Base):
         return (
             f"Conexion(origen_id={self.origen_id}, destino_id={self.destino_id}, "
             f"distancia={self.distancia}, nivel_seguridad={self.nivel_seguridad})"
+        )
+
+
+class Incidente(Base):
+    __tablename__ = "incidentes"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    conexion_id: Mapped[int] = mapped_column(
+        ForeignKey("conexiones.id"), nullable=False
+    )
+    tipo: Mapped[str] = mapped_column(String(50), nullable=False)
+    fecha: Mapped[datetime.datetime] = mapped_column(
+        DateTime, nullable=False, default=_ahora_utc
+    )
+    gravedad: Mapped[float] = mapped_column(Float, nullable=False)
+
+    conexion: Mapped["Conexion"] = relationship()
+
+    def __repr__(self):
+        return (
+            f"Incidente(id={self.id}, conexion_id={self.conexion_id}, "
+            f"tipo={self.tipo}, gravedad={self.gravedad})"
         )

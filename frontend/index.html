@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Safe Route</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+  />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Safe Route</h1>
+    <p>Elegí un origen, un destino y qué te importa más al movilizarte.</p>
+  </header>
+
+  <main>
+    <div id="mapa"></div>
+
+    <aside id="panel">
+      <label>
+        Origen
+        <select id="origen"></select>
+      </label>
+
+      <label>
+        Destino
+        <select id="destino"></select>
+      </label>
+
+      <label>
+        Criterio
+        <select id="criterio">
+          <option value="corta">Más corta</option>
+          <option value="segura">Más segura</option>
+          <option value="balanceada">Balanceada</option>
+        </select>
+      </label>
+
+      <div id="pesos" hidden>
+        <label>
+          Alpha (peso distancia)
+          <input type="number" id="alpha" min="0" step="0.1" value="0.5" />
+        </label>
+        <label>
+          Beta (peso riesgo)
+          <input type="number" id="beta" min="0" step="0.1" value="0.5" />
+        </label>
+      </div>
+
+      <button id="calcular">Calcular ruta</button>
+
+      <div id="resultado"></div>
+      <div id="error"></div>
+    </aside>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

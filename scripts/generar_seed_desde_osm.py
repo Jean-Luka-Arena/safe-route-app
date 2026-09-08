@@ -1,16 +1,15 @@
 """
 genera data/seed.json a partir de calles reales de OpenStreetMap (via
-Overpass API), para una zona de Buenos Aires.
+Overpass API), para la zona de Vicente López / Olivos, Buenos Aires (mi barrio :) ).
 
 Uso:
     python scripts/generar_seed_desde_osm.py
 
-requiere la librería `requests` (agregala a tu venv si hace falta:
-`pip install requests`).
+requiere la libreria `requests`.
 
 Nota: este script consulta un servicio publico y gratuito (Overpass
 API). Evita correrlo repetidas veces sin necesidad, por respeto a su
-política de uso justo.
+politica de uso justo.
 """
 
 import json
@@ -21,7 +20,7 @@ import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-SUR, OESTE, NORTE, ESTE = -34.625, -58.385, -34.600, -58.365
+SUR, OESTE, NORTE, ESTE = -34.545, -58.495, -34.505, -58.460
 
 TIPOS_DE_CALLE = "primary|secondary|tertiary|residential|unclassified|living_street"
 
@@ -47,8 +46,6 @@ def consultar_overpass():
 
 
 def haversine(lat1, lon1, lat2, lon2):
-    """Distancia en metros entre dos puntos lat/lon (formula del
-    semiverseno)"""
     radio_tierra = 6371000
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     dphi = math.radians(lat2 - lat1)

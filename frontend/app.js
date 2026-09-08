@@ -7,7 +7,7 @@ let lineaRuta = null;
 
 const cacheDirecciones = {};
 
-const mapa = L.map("mapa").setView([-34.615, -58.38], 15);
+const mapa = L.map("mapa").setView([-34.525, -58.4775], 14);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
@@ -225,11 +225,16 @@ function limpiarResultadoAnterior() {
 
 const OSRM_BASE_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
 
-async function obtenerTramoPorCalles(origen, destino) {
+async function obtenerRutaPorCalles(idsDeLaRuta) {
   try {
-    const url =
-      `${OSRM_BASE_URL}/${origen.longitud},${origen.latitud};` +
-      `${destino.longitud},${destino.latitud}?overview=full&geometries=geojson`;
+    const coordenadas = idsDeLaRuta
+      .map((id) => {
+        const u = ubicacionesPorId[id];
+        return `${u.longitud},${u.latitud}`;
+      })
+      .join(";");
+
+    const url = `${OSRM_BASE_URL}/${coordenadas}?overview=full&geometries=geojson`;
     const respuesta = await fetch(url);
     if (!respuesta.ok) return null;
 
@@ -246,21 +251,14 @@ async function obtenerTramoPorCalles(origen, destino) {
 }
 
 async function dibujarRuta(idsDeLaRuta) {
-  let puntos = [];
+  const puntosPorCalles = await obtenerRutaPorCalles(idsDeLaRuta);
 
-  for (let i = 0; i < idsDeLaRuta.length - 1; i++) {
-    const origen = ubicacionesPorId[idsDeLaRuta[i]];
-    const destino = ubicacionesPorId[idsDeLaRuta[i + 1]];
-
-    const tramoPorCalles = await obtenerTramoPorCalles(origen, destino);
-    const tramo = tramoPorCalles || [
-      [origen.latitud, origen.longitud],
-      [destino.latitud, destino.longitud],
-    ];
-
-    if (puntos.length > 0) puntos.pop();
-    puntos = puntos.concat(tramo);
-  }
+  const puntos =
+    puntosPorCalles ||
+    idsDeLaRuta.map((id) => {
+      const u = ubicacionesPorId[id];
+      return [u.latitud, u.longitud];
+    });
 
   lineaRuta = L.polyline(puntos, { color: "#16324f", weight: 5 }).addTo(mapa);
   mapa.fitBounds(lineaRuta.getBounds(), { padding: [40, 40] });

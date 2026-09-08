@@ -20,15 +20,31 @@
     <div id="mapa"></div>
 
     <aside id="panel">
-      <label>
-        Origen
-        <select id="origen"></select>
-      </label>
+      <div class="buscador">
+        <label>
+          Origen
+          <input
+            type="text"
+            id="origen-input"
+            placeholder="Ej: Av. de Mayo 800"
+            autocomplete="off"
+          />
+        </label>
+        <div id="origen-sugerencias" class="sugerencias" hidden></div>
+      </div>
 
-      <label>
-        Destino
-        <select id="destino"></select>
-      </label>
+      <div class="buscador">
+        <label>
+          Destino
+          <input
+            type="text"
+            id="destino-input"
+            placeholder="Ej: Plaza de Mayo"
+            autocomplete="off"
+          />
+        </label>
+        <div id="destino-sugerencias" class="sugerencias" hidden></div>
+      </div>
 
       <label>
         Criterio

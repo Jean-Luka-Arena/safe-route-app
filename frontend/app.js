@@ -1,17 +1,19 @@
 let ubicacionesPorId = {};
-let marcadores = [];
+let seleccionOrigen = null;
+let seleccionDestino = null;
+let marcadorOrigen = null;
+let marcadorDestino = null;
 let lineaRuta = null;
+
 const cacheDirecciones = {};
 
-const mapa = L.map("mapa").setView([-34.615, -58.38], 13);
+const mapa = L.map("mapa").setView([-34.615, -58.38], 15);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",
   maxZoom: 19,
 }).addTo(mapa);
 
-const selectOrigen = document.getElementById("origen");
-const selectDestino = document.getElementById("destino");
 const selectCriterio = document.getElementById("criterio");
 const divPesos = document.getElementById("pesos");
 const inputAlpha = document.getElementById("alpha");
@@ -24,11 +26,41 @@ selectCriterio.addEventListener("change", () => {
   divPesos.hidden = selectCriterio.value !== "balanceada";
 });
 
+function distanciaEnMetros(lat1, lon1, lat2, lon2) {
+  const radioTierra = 6371000;
+  const aRad = (grados) => (grados * Math.PI) / 180;
+  const dLat = aRad(lat2 - lat1);
+  const dLon = aRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(aRad(lat1)) * Math.cos(aRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * radioTierra * Math.asin(Math.sqrt(a));
+}
+
+function ubicacionMasCercana(lat, lon) {
+  let mejor = null;
+  let mejorDistancia = Infinity;
+
+  for (const id in ubicacionesPorId) {
+    const candidata = ubicacionesPorId[id];
+    const distancia = distanciaEnMetros(
+      lat,
+      lon,
+      candidata.latitud,
+      candidata.longitud
+    );
+    if (distancia < mejorDistancia) {
+      mejorDistancia = distancia;
+      mejor = candidata;
+    }
+  }
+
+  return mejor;
+}
+
 async function obtenerDireccion(latitud, longitud) {
   const clave = `${latitud},${longitud}`;
-  if (cacheDirecciones[clave]) {
-    return cacheDirecciones[clave];
-  }
+  if (cacheDirecciones[clave]) return cacheDirecciones[clave];
 
   try {
     const url =
@@ -39,9 +71,7 @@ async function obtenerDireccion(latitud, longitud) {
 
     const datos = await respuesta.json();
     const direccion = formatearDireccion(datos);
-    if (direccion) {
-      cacheDirecciones[clave] = direccion;
-    }
+    if (direccion) cacheDirecciones[clave] = direccion;
     return direccion;
   } catch (error) {
     return null;
@@ -56,66 +86,132 @@ function formatearDireccion(datos) {
   if (calle) {
     return direccion.house_number ? `${calle} ${direccion.house_number}` : calle;
   }
-
   return datos.display_name ? datos.display_name.split(",")[0] : null;
 }
 
-async function cargarDirecciones(ubicaciones) {
-  for (const ubicacion of ubicaciones) {
-    const direccion = await obtenerDireccion(
-      ubicacion.latitud,
-      ubicacion.longitud
+async function buscarDirecciones(texto) {
+  if (texto.trim().length < 3) return [];
+
+  const viewbox = `${ZONA.oeste},${ZONA.norte},${ZONA.este},${ZONA.sur}`;
+  const params = new URLSearchParams({
+    format: "json",
+    q: texto,
+    viewbox,
+    bounded: "1",
+    limit: "5",
+  });
+
+  try {
+    const respuesta = await fetch(
+      `https://nominatim.openstreetmap.org/search?${params}`
     );
-    const texto = direccion || `Ubicación ${ubicacion.id}`;
-
-    ubicacion.marcador.setPopupContent(texto);
-    document
-      .querySelectorAll(`option[value="${ubicacion.id}"]`)
-      .forEach((opcion) => {
-        opcion.textContent = texto;
-      });
-
-    await new Promise((resolve) => setTimeout(resolve, 1100));
+    if (!respuesta.ok) return [];
+    return await respuesta.json();
+  } catch (error) {
+    return [];
   }
 }
+
+function ubicarMarcadorSeleccion(marcadorActual, ubicacion, etiqueta, color) {
+  if (marcadorActual) {
+    mapa.removeLayer(marcadorActual);
+  }
+  const marcador = L.circleMarker([ubicacion.latitud, ubicacion.longitud], {
+    radius: 9,
+    color,
+    fillColor: color,
+    fillOpacity: 0.9,
+  })
+    .addTo(mapa)
+    .bindPopup(etiqueta)
+    .openPopup();
+
+  return marcador;
+}
+
+function configurarBuscador(inputId, sugerenciasId, alElegir) {
+  const input = document.getElementById(inputId);
+  const listaSugerencias = document.getElementById(sugerenciasId);
+  let temporizador = null;
+
+  input.addEventListener("input", () => {
+    clearTimeout(temporizador);
+    const texto = input.value;
+
+    temporizador = setTimeout(async () => {
+      const resultados = await buscarDirecciones(texto);
+      renderizarSugerencias(resultados);
+    }, 600);
+  });
+
+  document.addEventListener("click", (evento) => {
+    if (evento.target !== input) {
+      listaSugerencias.hidden = true;
+    }
+  });
+
+  function renderizarSugerencias(resultados) {
+    listaSugerencias.innerHTML = "";
+
+    if (resultados.length === 0) {
+      listaSugerencias.hidden = true;
+      return;
+    }
+
+    for (const resultado of resultados) {
+      const item = document.createElement("div");
+      item.className = "sugerencia";
+      item.textContent = resultado.display_name;
+
+      item.addEventListener("click", () => {
+        const lat = parseFloat(resultado.lat);
+        const lon = parseFloat(resultado.lon);
+        const cercana = ubicacionMasCercana(lat, lon);
+
+        input.value = resultado.display_name.split(",").slice(0, 2).join(",");
+        listaSugerencias.hidden = true;
+        listaSugerencias.innerHTML = "";
+
+        alElegir(cercana);
+      });
+
+      listaSugerencias.appendChild(item);
+    }
+
+    listaSugerencias.hidden = false;
+  }
+}
+
+configurarBuscador("origen-input", "origen-sugerencias", (cercana) => {
+  seleccionOrigen = cercana;
+  marcadorOrigen = ubicarMarcadorSeleccion(
+    marcadorOrigen,
+    cercana,
+    "Origen",
+    "#1a7d3c"
+  );
+  mapa.panTo([cercana.latitud, cercana.longitud]);
+});
+
+configurarBuscador("destino-input", "destino-sugerencias", (cercana) => {
+  seleccionDestino = cercana;
+  marcadorDestino = ubicarMarcadorSeleccion(
+    marcadorDestino,
+    cercana,
+    "Destino",
+    "#a12727"
+  );
+  mapa.panTo([cercana.latitud, cercana.longitud]);
+});
 
 async function cargarUbicaciones() {
   const respuesta = await fetch(`${API_BASE_URL}/locations`);
   const ubicaciones = await respuesta.json();
 
   ubicacionesPorId = {};
-  selectOrigen.innerHTML = "";
-  selectDestino.innerHTML = "";
-
   for (const ubicacion of ubicaciones) {
-    const textoProvisorio = `Ubicación ${ubicacion.id} (buscando dirección…)`;
-
-    const marcador = L.marker([ubicacion.latitud, ubicacion.longitud])
-      .addTo(mapa)
-      .bindPopup(textoProvisorio);
-    marcadores.push(marcador);
-
-    ubicacion.marcador = marcador;
     ubicacionesPorId[ubicacion.id] = ubicacion;
-
-    for (const select of [selectOrigen, selectDestino]) {
-      const opcion = document.createElement("option");
-      opcion.value = ubicacion.id;
-      opcion.textContent = textoProvisorio;
-      select.appendChild(opcion);
-    }
   }
-
-  if (selectDestino.options.length > 1) {
-    selectDestino.selectedIndex = 1;
-  }
-
-  if (ubicaciones.length > 0) {
-    const grupo = L.featureGroup(marcadores);
-    mapa.fitBounds(grupo.getBounds(), { padding: [30, 30] });
-  }
-
-  cargarDirecciones(ubicaciones);
 }
 
 function limpiarResultadoAnterior() {
@@ -162,9 +258,7 @@ async function dibujarRuta(idsDeLaRuta) {
       [destino.latitud, destino.longitud],
     ];
 
-    if (puntos.length > 0) {
-      puntos.pop();
-    }
+    if (puntos.length > 0) puntos.pop();
     puntos = puntos.concat(tramo);
   }
 
@@ -174,14 +268,10 @@ async function dibujarRuta(idsDeLaRuta) {
 
 function nombreLegible(id) {
   const ubicacion = ubicacionesPorId[id];
-  const marcador = ubicacion && ubicacion.marcador;
-  if (marcador) {
-    const contenidoPopup = marcador.getPopup().getContent();
-    if (contenidoPopup && !contenidoPopup.includes("buscando dirección")) {
-      return contenidoPopup;
-    }
-  }
-  return `Ubicación ${id}`;
+  if (!ubicacion) return `Ubicación ${id}`;
+
+  const clave = `${ubicacion.latitud},${ubicacion.longitud}`;
+  return cacheDirecciones[clave] || `Ubicación ${id}`;
 }
 
 function mostrarResultado(resultado) {
@@ -197,17 +287,17 @@ function mostrarResultado(resultado) {
 async function calcularRuta() {
   limpiarResultadoAnterior();
 
-  const origin = selectOrigen.value;
-  const destination = selectDestino.value;
-  const criteria = selectCriterio.value;
-
-  if (!origin || !destination) {
-    divError.textContent = "Elegí un origen y un destino.";
+  if (!seleccionOrigen || !seleccionDestino) {
+    divError.textContent =
+      "Buscá y elegí un origen y un destino de la lista de sugerencias.";
     return;
   }
 
-  const parametros = new URLSearchParams({ origin, destination, criteria });
+  const origin = seleccionOrigen.id;
+  const destination = seleccionDestino.id;
+  const criteria = selectCriterio.value;
 
+  const parametros = new URLSearchParams({ origin, destination, criteria });
   if (criteria === "balanceada") {
     parametros.set("alpha", inputAlpha.value);
     parametros.set("beta", inputBeta.value);

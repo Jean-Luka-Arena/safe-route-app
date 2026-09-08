@@ -32,7 +32,6 @@ def calcular_ruta_endpoint(
             ciudad, origin, destination, criterio=criteria, alpha=alpha, beta=beta
         )
     except ValueError as error:
-        # criterio invalido, o balanceada sin alpha/beta: error del cliente
         raise HTTPException(status_code=400, detail=str(error))
     except UbicacionInexistente as error:
         raise HTTPException(status_code=404, detail=str(error))

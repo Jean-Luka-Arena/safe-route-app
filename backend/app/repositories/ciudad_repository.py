@@ -8,10 +8,6 @@ SEGURIDAD_MAXIMA = 10
 
 
 def obtener_ciudad(sesion):
-    """arma un GrafoCiudad leyendo ubicaciones y conexiones desde la
-    base de datos, aplicando la seguridad efectiva de cada calle segun
-    sus incidentes reportados
-    """
     ciudad = GrafoCiudad()
 
     for ubicacion in sesion.query(Ubicacion).all():

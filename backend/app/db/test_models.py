@@ -8,11 +8,6 @@ from app.db.models import Ubicacion, Conexion
 
 @pytest.fixture
 def sesion():
-    """Sesión contra una base SQLite en memoria, solo para validar el
-    mapeo de los modelos sin depender de tener Postgres corriendo.
-    La base real (Postgres) se prueba aparte, de forma manual, contra
-    el docker-compose.
-    """
     engine = create_engine("sqlite:///:memory:")
     Base.metadata.create_all(bind=engine)
     SesionDePrueba = sessionmaker(bind=engine)
@@ -22,19 +17,19 @@ def sesion():
 
 
 def test_crear_y_leer_una_ubicacion(sesion):
-    ubicacion = Ubicacion(latitud=-34.6037, longitud=-58.3816)
+    ubicacion = Ubicacion(id=1, latitud=-34.6037, longitud=-58.3816)
     sesion.add(ubicacion)
     sesion.commit()
 
     leida = sesion.query(Ubicacion).first()
     assert leida.latitud == -34.6037
     assert leida.longitud == -58.3816
-    assert leida.id is not None
+    assert leida.id == 1
 
 
 def test_crear_una_conexion_entre_dos_ubicaciones(sesion):
-    a = Ubicacion(latitud=-34.60, longitud=-58.38)
-    b = Ubicacion(latitud=-34.61, longitud=-58.39)
+    a = Ubicacion(id=1, latitud=-34.60, longitud=-58.38)
+    b = Ubicacion(id=2, latitud=-34.61, longitud=-58.39)
     sesion.add_all([a, b])
     sesion.commit()
 
@@ -55,8 +50,8 @@ def test_crear_una_conexion_entre_dos_ubicaciones(sesion):
 
 
 def test_relacion_origen_destino_devuelve_las_ubicaciones(sesion):
-    a = Ubicacion(latitud=-34.60, longitud=-58.38)
-    b = Ubicacion(latitud=-34.61, longitud=-58.39)
+    a = Ubicacion(id=1, latitud=-34.60, longitud=-58.38)
+    b = Ubicacion(id=2, latitud=-34.61, longitud=-58.39)
     sesion.add_all([a, b])
     sesion.commit()
 
@@ -72,9 +67,9 @@ def test_relacion_origen_destino_devuelve_las_ubicaciones(sesion):
 
 
 def test_varias_conexiones_desde_la_misma_ubicacion(sesion):
-    a = Ubicacion(latitud=0, longitud=0)
-    b = Ubicacion(latitud=1, longitud=1)
-    c = Ubicacion(latitud=2, longitud=2)
+    a = Ubicacion(id=1, latitud=0, longitud=0)
+    b = Ubicacion(id=2, latitud=1, longitud=1)
+    c = Ubicacion(id=3, latitud=2, longitud=2)
     sesion.add_all([a, b, c])
     sesion.commit()
 

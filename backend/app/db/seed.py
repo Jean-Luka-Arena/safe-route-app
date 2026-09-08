@@ -8,11 +8,6 @@ RUTA_SEED = Path(__file__).resolve().parents[3] / "data" / "seed.json"
 
 
 def cargar_datos_de_prueba():
-    """Carga las ubicaciones y conexiones de data/seed.json en la base.
-
-    No hace nada si ya hay ubicaciones cargadas, para evitar duplicar
-    datos si el script se corre mas de una vez.
-    """
     sesion = SessionLocal()
     try:
         if sesion.query(Ubicacion).first() is not None:

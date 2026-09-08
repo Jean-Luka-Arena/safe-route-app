@@ -1,11 +1,6 @@
-// Estado en memoria: ubicaciones cargadas desde la API, indexadas por id,
-// y las capas de Leaflet que hay que ir reemplazando en cada cálculo.
 let ubicacionesPorId = {};
 let marcadores = [];
 let lineaRuta = null;
-
-// Cache simple de direcciones ya resueltas, para no volver a pedirlas
-// si se recarga la lista de ubicaciones en la misma sesión.
 const cacheDirecciones = {};
 
 const mapa = L.map("mapa").setView([-34.615, -58.38], 13);
@@ -29,12 +24,6 @@ selectCriterio.addEventListener("change", () => {
   divPesos.hidden = selectCriterio.value !== "balanceada";
 });
 
-/**
- * Le pregunta a Nominatim (geocodificación inversa de OpenStreetMap) qué
- * dirección hay en una lat/long. Devuelve null si falla o no encuentra
- * nada legible, para que quien la llama pueda mostrar un texto de
- * respaldo (ej: "Ubicación 3") en vez de romper la página.
- */
 async function obtenerDireccion(latitud, longitud) {
   const clave = `${latitud},${longitud}`;
   if (cacheDirecciones[clave]) {
@@ -68,19 +57,9 @@ function formatearDireccion(datos) {
     return direccion.house_number ? `${calle} ${direccion.house_number}` : calle;
   }
 
-  // sin nombre de calle (ej: en medio de una plaza o un parque),
-  // usamos el primer tramo del nombre completo que arma Nominatim.
   return datos.display_name ? datos.display_name.split(",")[0] : null;
 }
 
-/**
- * Va pidiendo, de a una y con una pausa entre cada pedido, la dirección
- * real de cada ubicación, y actualiza su marcador y sus <option> a
- * medida que van llegando las respuestas.
- *
- * La pausa de ~1.1s respeta la política de uso de Nominatim (máximo
- * 1 pedido por segundo en el servidor público gratuito).
- */
 async function cargarDirecciones(ubicaciones) {
   for (const ubicacion of ubicaciones) {
     const direccion = await obtenerDireccion(
@@ -127,7 +106,6 @@ async function cargarUbicaciones() {
     }
   }
 
-  // por defecto, que origen y destino no arranquen iguales
   if (selectDestino.options.length > 1) {
     selectDestino.selectedIndex = 1;
   }
@@ -137,8 +115,6 @@ async function cargarUbicaciones() {
     mapa.fitBounds(grupo.getBounds(), { padding: [30, 30] });
   }
 
-  // no bloqueamos la carga de la página esperando las direcciones:
-  // se van completando solas en segundo plano.
   cargarDirecciones(ubicaciones);
 }
 
@@ -151,19 +127,8 @@ function limpiarResultadoAnterior() {
   }
 }
 
-// Servidor público de demo de OSRM (Open Source Routing Machine), perfil
-// peatonal. Se usa SOLO para la parte visual: qué calles dibujar entre dos
-// puntos consecutivos de la ruta. La ruta en sí (qué secuencia de
-// ubicaciones conviene tomar) la sigue decidiendo nuestro propio Dijkstra,
-// con sus propios criterios de distancia/seguridad.
 const OSRM_BASE_URL = "https://routing.openstreetmap.de/routed-foot/route/v1/foot";
 
-/**
- * Le pide a OSRM la geometría real (por calles) entre dos ubicaciones.
- * Devuelve un array de puntos [lat, lon] listos para Leaflet, o null si
- * el servicio falla, para que quien la llama pueda usar una línea recta
- * como respaldo en vez de romper el dibujo de la ruta.
- */
 async function obtenerTramoPorCalles(origen, destino) {
   try {
     const url =
@@ -175,8 +140,6 @@ async function obtenerTramoPorCalles(origen, destino) {
     const datos = await respuesta.json();
     if (!datos.routes || datos.routes.length === 0) return null;
 
-    // GeoJSON trae las coordenadas como [lon, lat]; Leaflet las espera
-    // como [lat, lon].
     return datos.routes[0].geometry.coordinates.map(([lon, lat]) => [
       lat,
       lon,
@@ -199,8 +162,6 @@ async function dibujarRuta(idsDeLaRuta) {
       [destino.latitud, destino.longitud],
     ];
 
-    // el último punto de un tramo es el primero del siguiente: evitamos
-    // duplicarlo para que la línea no tenga un "salto" ahí.
     if (puntos.length > 0) {
       puntos.pop();
     }

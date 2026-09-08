@@ -3,15 +3,6 @@ from app.tda_grafo.atributos_calle import AtributosCalle
 
 
 class GrafoCiudad:
-    """Modela una ciudad como un grafo de ubicaciones conectadas por calles,
-    donde cada calle tiene una distancia y un nivel de seguridad.
-
-    Compone un Grafo generico en vez de heredar de el (composición sobre
-    herencia), para que la lógica de dominio ("calle", "ubicacion") no
-    quede acoplada al TDA generico de grafos, que no sabe nada de
-    distancias ni seguridad.
-    """
-
     def __init__(self, es_dirigido=False):
         self._grafo = Grafo(es_dirigido=es_dirigido)
 

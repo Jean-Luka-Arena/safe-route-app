@@ -1,7 +1,7 @@
 import datetime
 from datetime import timezone
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import BigInteger, DateTime, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.database import Base
@@ -14,7 +14,7 @@ def _ahora_utc():
 class Ubicacion(Base):
     __tablename__ = "ubicaciones"
 
-    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
     latitud: Mapped[float] = mapped_column(Float, nullable=False)
     longitud: Mapped[float] = mapped_column(Float, nullable=False)
 
@@ -25,17 +25,14 @@ class Ubicacion(Base):
 
 
 class Conexion(Base):
-    """Una calle que conecta dos ubicaciones, con su distancia y nivel
-    de seguridad. Es el equivalente persistido de una arista + sus
-    AtributosCalle en GrafoCiudad.
-    """
-
     __tablename__ = "conexiones"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    origen_id: Mapped[int] = mapped_column(ForeignKey("ubicaciones.id"), nullable=False)
+    origen_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("ubicaciones.id"), nullable=False
+    )
     destino_id: Mapped[int] = mapped_column(
-        ForeignKey("ubicaciones.id"), nullable=False
+        BigInteger, ForeignKey("ubicaciones.id"), nullable=False
     )
     distancia: Mapped[float] = mapped_column(Float, nullable=False)
     nivel_seguridad: Mapped[float] = mapped_column(Float, nullable=False)

@@ -1,9 +1,12 @@
 let ubicacionesPorId = {};
+let conexionesPorId = {};
 let seleccionOrigen = null;
 let seleccionDestino = null;
+let seleccionCalleIncidente = null;
 let marcadorOrigen = null;
 let marcadorDestino = null;
 let lineaRuta = null;
+let lineaCalleIncidente = null;
 
 const cacheDirecciones = {};
 
@@ -52,6 +55,39 @@ function ubicacionMasCercana(lat, lon) {
     if (distancia < mejorDistancia) {
       mejorDistancia = distancia;
       mejor = candidata;
+    }
+  }
+
+  return mejor;
+}
+
+function distanciaAConexion(lat, lon, origen, destino, muestras = 20) {
+  let minima = Infinity;
+  for (let i = 0; i <= muestras; i++) {
+    const t = i / muestras;
+    const latInterpolada = origen.latitud + t * (destino.latitud - origen.latitud);
+    const lonInterpolada =
+      origen.longitud + t * (destino.longitud - origen.longitud);
+    const distancia = distanciaEnMetros(lat, lon, latInterpolada, lonInterpolada);
+    if (distancia < minima) minima = distancia;
+  }
+  return minima;
+}
+
+function conexionMasCercana(lat, lon) {
+  let mejor = null;
+  let mejorDistancia = Infinity;
+
+  for (const id in conexionesPorId) {
+    const conexion = conexionesPorId[id];
+    const origen = ubicacionesPorId[conexion.origen_id];
+    const destino = ubicacionesPorId[conexion.destino_id];
+    if (!origen || !destino) continue;
+
+    const distancia = distanciaAConexion(lat, lon, origen, destino);
+    if (distancia < mejorDistancia) {
+      mejorDistancia = distancia;
+      mejor = conexion;
     }
   }
 
@@ -171,7 +207,6 @@ function configurarBuscador(inputId, sugerenciasId, alElegir, alInvalidar) {
       item.addEventListener("click", () => {
         const lat = parseFloat(resultado.lat);
         const lon = parseFloat(resultado.lon);
-        const cercana = ubicacionMasCercana(lat, lon);
 
         const textoElegido = resultado.display_name
           .split(",")
@@ -184,7 +219,7 @@ function configurarBuscador(inputId, sugerenciasId, alElegir, alInvalidar) {
         listaSugerencias.hidden = true;
         listaSugerencias.innerHTML = "";
 
-        alElegir(cercana);
+        alElegir(lat, lon);
       });
 
       listaSugerencias.appendChild(item);
@@ -197,7 +232,8 @@ function configurarBuscador(inputId, sugerenciasId, alElegir, alInvalidar) {
 configurarBuscador(
   "origen-input",
   "origen-sugerencias",
-  (cercana) => {
+  (lat, lon) => {
+    const cercana = ubicacionMasCercana(lat, lon);
     seleccionOrigen = cercana;
     marcadorOrigen = ubicarMarcadorSeleccion(
       marcadorOrigen,
@@ -215,7 +251,8 @@ configurarBuscador(
 configurarBuscador(
   "destino-input",
   "destino-sugerencias",
-  (cercana) => {
+  (lat, lon) => {
+    const cercana = ubicacionMasCercana(lat, lon);
     seleccionDestino = cercana;
     marcadorDestino = ubicarMarcadorSeleccion(
       marcadorDestino,
@@ -237,6 +274,16 @@ async function cargarUbicaciones() {
   ubicacionesPorId = {};
   for (const ubicacion of ubicaciones) {
     ubicacionesPorId[ubicacion.id] = ubicacion;
+  }
+}
+
+async function cargarConexiones() {
+  const respuesta = await fetch(`${API_BASE_URL}/connections`);
+  const conexiones = await respuesta.json();
+
+  conexionesPorId = {};
+  for (const conexion of conexiones) {
+    conexionesPorId[conexion.id] = conexion;
   }
 }
 
@@ -308,14 +355,18 @@ function mostrarResultado(resultado) {
   `;
 }
 
+function formatearDetalleError(detail) {
+  if (!detail) return "No se pudo calcular la ruta.";
+  if (typeof detail === "string") return detail;
+  if (Array.isArray(detail)) {
+    return detail.map((item) => item.msg || "Valor inválido.").join(" ");
+  }
+  return "No se pudo calcular la ruta.";
+}
+
 async function calcularRuta() {
   limpiarResultadoAnterior();
 
-  if (!seleccionOrigen && !seleccionDestino) {
-    divError.textContent =
-      "Falta elegir un origen y un destino de la lista de sugerencias.";
-    return;
-  }
   if (!seleccionOrigen) {
     divError.textContent = "Falta elegir un origen de la lista de sugerencias.";
     return;
@@ -337,7 +388,7 @@ async function calcularRuta() {
 
     const fueraDeRango = (valor) => Number.isNaN(valor) || valor < 0 || valor > 1;
     if (fueraDeRango(alpha) || fueraDeRango(beta)) {
-      divError.textContent = "Alpha y Beta deben ser numeros entre 0 y 1.";
+      divError.textContent = "Alpha y Beta deben ser números entre 0 y 1.";
       return;
     }
 
@@ -350,7 +401,7 @@ async function calcularRuta() {
     const datos = await respuesta.json();
 
     if (!respuesta.ok) {
-      divError.textContent = datos.detail || "No se pudo calcular la ruta.";
+      divError.textContent = formatearDetalleError(datos.detail);
       return;
     }
 
@@ -364,7 +415,103 @@ async function calcularRuta() {
 
 botonCalcular.addEventListener("click", calcularRuta);
 
+const detallesReporte = document.getElementById("detalles-reporte");
+const selectIncidenteTipo = document.getElementById("incidente-tipo");
+const botonEnviarIncidente = document.getElementById("incidente-enviar");
+const divIncidenteResultado = document.getElementById("incidente-resultado");
+const divIncidenteError = document.getElementById("incidente-error");
+
+function marcarCalleSeleccionada(conexion) {
+  if (lineaCalleIncidente) {
+    mapa.removeLayer(lineaCalleIncidente);
+  }
+  const origen = ubicacionesPorId[conexion.origen_id];
+  const destino = ubicacionesPorId[conexion.destino_id];
+
+  lineaCalleIncidente = L.polyline(
+    [
+      [origen.latitud, origen.longitud],
+      [destino.latitud, destino.longitud],
+    ],
+    { color: "#c98a12", weight: 6, opacity: 0.9 }
+  ).addTo(mapa);
+
+  mapa.fitBounds(lineaCalleIncidente.getBounds(), { padding: [60, 60] });
+}
+
+configurarBuscador(
+  "incidente-direccion-input",
+  "incidente-direccion-sugerencias",
+  (lat, lon) => {
+    seleccionCalleIncidente = conexionMasCercana(lat, lon);
+    if (seleccionCalleIncidente) {
+      marcarCalleSeleccionada(seleccionCalleIncidente);
+    }
+  },
+  () => {
+    seleccionCalleIncidente = null;
+  }
+);
+
+detallesReporte.addEventListener("toggle", () => {
+  if (detallesReporte.open) {
+    divIncidenteResultado.textContent = "";
+    divIncidenteError.textContent = "";
+  } else {
+    if (lineaCalleIncidente) {
+      mapa.removeLayer(lineaCalleIncidente);
+      lineaCalleIncidente = null;
+    }
+    seleccionCalleIncidente = null;
+    document.getElementById("incidente-direccion-input").value = "";
+  }
+});
+
+async function enviarIncidente() {
+  divIncidenteError.textContent = "";
+  divIncidenteResultado.textContent = "";
+
+  if (!seleccionCalleIncidente) {
+    divIncidenteError.textContent =
+      "Buscá y elegí una dirección de la lista de sugerencias.";
+    return;
+  }
+
+  const cuerpo = {
+    conexion_id: seleccionCalleIncidente.id,
+    tipo: selectIncidenteTipo.value,
+  };
+
+  try {
+    const respuesta = await fetch(`${API_BASE_URL}/incidents`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(cuerpo),
+    });
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok) {
+      divIncidenteError.textContent = formatearDetalleError(datos.detail);
+      return;
+    }
+
+    divIncidenteResultado.textContent =
+      "¡Gracias! Reporte cargado. La seguridad de esta calle se va a " +
+      "ajustar en los próximos cálculos de ruta.";
+  } catch (error) {
+    divIncidenteError.textContent =
+      "No se pudo conectar con la API. ¿Está corriendo el backend?";
+  }
+}
+
+botonEnviarIncidente.addEventListener("click", enviarIncidente);
+
 cargarUbicaciones().catch(() => {
   divError.textContent =
     "No se pudieron cargar las ubicaciones. ¿Está corriendo el backend?";
+});
+
+cargarConexiones().catch(() => {
+  divError.textContent =
+    "No se pudieron cargar las calles. ¿Está corriendo el backend?";
 });

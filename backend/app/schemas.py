@@ -15,9 +15,6 @@ class TipoIncidente(str, Enum):
 class IncidenteCrear(BaseModel):
     conexion_id: int
     tipo: TipoIncidente
-    gravedad: float = Field(
-        ..., ge=0, le=10, description="Qué tan grave es, de 0 (leve) a 10 (grave)"
-    )
     fecha: Optional[datetime.datetime] = Field(
         None, description="Si no se especifica, se usa el momento actual"
     )

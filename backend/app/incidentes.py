@@ -1,37 +1,23 @@
-import datetime
-from datetime import timezone
-
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.db.database import obtener_sesion
-from app.db.models import Conexion, Incidente
 from app.schemas import IncidenteCrear
+from app.services.incidentes_service import reportar_incidente, ConexionInexistente
 
 router = APIRouter()
 
 
 @router.post("/incidents", status_code=201)
-def reportar_incidente(
+def reportar_incidente_endpoint(
     datos: IncidenteCrear, sesion: Session = Depends(obtener_sesion)
 ):
-    """Registra un incidente sobre una calle existente"""
-    conexion = sesion.get(Conexion, datos.conexion_id)
-    if conexion is None:
-        raise HTTPException(
-            status_code=404,
-            detail=f"la calle con id {datos.conexion_id} no existe",
+    try:
+        incidente = reportar_incidente(
+            sesion, datos.conexion_id, datos.tipo, datos.fecha
         )
-
-    incidente = Incidente(
-        conexion_id=datos.conexion_id,
-        tipo=datos.tipo.value,
-        gravedad=datos.gravedad,
-        fecha=datos.fecha or datetime.datetime.now(timezone.utc),
-    )
-    sesion.add(incidente)
-    sesion.commit()
-    sesion.refresh(incidente)
+    except ConexionInexistente as error:
+        raise HTTPException(status_code=404, detail=str(error))
 
     return {
         "id": incidente.id,

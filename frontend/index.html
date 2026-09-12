@@ -26,7 +26,7 @@
           <input
             type="text"
             id="origen-input"
-            placeholder="Ej: Av. de Mayo 800"
+            placeholder="Ej: Av. Maipú 1500"
             autocomplete="off"
           />
         </label>
@@ -39,7 +39,7 @@
           <input
             type="text"
             id="destino-input"
-            placeholder="Ej: Plaza de Mayo"
+            placeholder="Ej: Plaza Alsina"
             autocomplete="off"
           />
         </label>
@@ -70,6 +70,44 @@
 
       <div id="resultado"></div>
       <div id="error"></div>
+
+      <hr />
+
+      <details id="detalles-reporte">
+        <summary>📮 Reportar un incidente</summary>
+
+        <div class="buscador">
+          <label>
+            ¿Dónde ocurrió?
+            <input
+              type="text"
+              id="incidente-direccion-input"
+              placeholder="Ej: Av. Maipú 1500"
+              autocomplete="off"
+            />
+          </label>
+          <div
+            id="incidente-direccion-sugerencias"
+            class="sugerencias"
+            hidden
+          ></div>
+        </div>
+
+        <label>
+          ¿Qué tipo de incidente fue?
+          <select id="incidente-tipo">
+            <option value="robo">Robo</option>
+            <option value="zona_oscura">Zona oscura</option>
+            <option value="calle_bloqueada">Calle bloqueada</option>
+            <option value="accidente">Accidente</option>
+          </select>
+        </label>
+
+        <button id="incidente-enviar">Enviar reporte</button>
+
+        <div id="incidente-resultado"></div>
+        <div id="incidente-error"></div>
+      </details>
     </aside>
   </main>
 

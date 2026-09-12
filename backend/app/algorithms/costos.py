@@ -14,8 +14,8 @@ def costo_seguridad(atributos):
 
 
 def costo_balanceado(atributos, alpha, beta):
-    if alpha < 0 or beta < 0:
-        raise ValueError("alpha y beta deben ser valores no negativos")
+    if not (0 <= alpha <= 1) or not (0 <= beta <= 1):
+        raise ValueError("alpha y beta deben estar entre 0 y 1")
     return alpha * atributos.distancia + beta * riesgo(atributos)
 
 

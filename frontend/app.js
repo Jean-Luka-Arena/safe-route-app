@@ -129,12 +129,17 @@ function ubicarMarcadorSeleccion(marcadorActual, ubicacion, etiqueta, color) {
   return marcador;
 }
 
-function configurarBuscador(inputId, sugerenciasId, alElegir) {
+function configurarBuscador(inputId, sugerenciasId, alElegir, alInvalidar) {
   const input = document.getElementById(inputId);
   const listaSugerencias = document.getElementById(sugerenciasId);
   let temporizador = null;
+  let ultimaSeleccionConfirmada = null;
 
   input.addEventListener("input", () => {
+    if (input.value !== ultimaSeleccionConfirmada) {
+      alInvalidar();
+    }
+
     clearTimeout(temporizador);
     const texto = input.value;
 
@@ -168,7 +173,14 @@ function configurarBuscador(inputId, sugerenciasId, alElegir) {
         const lon = parseFloat(resultado.lon);
         const cercana = ubicacionMasCercana(lat, lon);
 
-        input.value = resultado.display_name.split(",").slice(0, 2).join(",");
+        const textoElegido = resultado.display_name
+          .split(",")
+          .slice(0, 2)
+          .join(",");
+
+        input.value = textoElegido;
+        ultimaSeleccionConfirmada = textoElegido;
+
         listaSugerencias.hidden = true;
         listaSugerencias.innerHTML = "";
 
@@ -182,27 +194,41 @@ function configurarBuscador(inputId, sugerenciasId, alElegir) {
   }
 }
 
-configurarBuscador("origen-input", "origen-sugerencias", (cercana) => {
-  seleccionOrigen = cercana;
-  marcadorOrigen = ubicarMarcadorSeleccion(
-    marcadorOrigen,
-    cercana,
-    "Origen",
-    "#1a7d3c"
-  );
-  mapa.panTo([cercana.latitud, cercana.longitud]);
-});
+configurarBuscador(
+  "origen-input",
+  "origen-sugerencias",
+  (cercana) => {
+    seleccionOrigen = cercana;
+    marcadorOrigen = ubicarMarcadorSeleccion(
+      marcadorOrigen,
+      cercana,
+      "Origen",
+      "#1a7d3c"
+    );
+    mapa.panTo([cercana.latitud, cercana.longitud]);
+  },
+  () => {
+    seleccionOrigen = null;
+  }
+);
 
-configurarBuscador("destino-input", "destino-sugerencias", (cercana) => {
-  seleccionDestino = cercana;
-  marcadorDestino = ubicarMarcadorSeleccion(
-    marcadorDestino,
-    cercana,
-    "Destino",
-    "#a12727"
-  );
-  mapa.panTo([cercana.latitud, cercana.longitud]);
-});
+configurarBuscador(
+  "destino-input",
+  "destino-sugerencias",
+  (cercana) => {
+    seleccionDestino = cercana;
+    marcadorDestino = ubicarMarcadorSeleccion(
+      marcadorDestino,
+      cercana,
+      "Destino",
+      "#a12727"
+    );
+    mapa.panTo([cercana.latitud, cercana.longitud]);
+  },
+  () => {
+    seleccionDestino = null;
+  }
+);
 
 async function cargarUbicaciones() {
   const respuesta = await fetch(`${API_BASE_URL}/locations`);
@@ -285,9 +311,17 @@ function mostrarResultado(resultado) {
 async function calcularRuta() {
   limpiarResultadoAnterior();
 
-  if (!seleccionOrigen || !seleccionDestino) {
+  if (!seleccionOrigen && !seleccionDestino) {
     divError.textContent =
-      "Buscá y elegí un origen y un destino de la lista de sugerencias.";
+      "Falta elegir un origen y un destino de la lista de sugerencias.";
+    return;
+  }
+  if (!seleccionOrigen) {
+    divError.textContent = "Falta elegir un origen de la lista de sugerencias.";
+    return;
+  }
+  if (!seleccionDestino) {
+    divError.textContent = "Falta elegir un destino de la lista de sugerencias.";
     return;
   }
 
@@ -296,9 +330,19 @@ async function calcularRuta() {
   const criteria = selectCriterio.value;
 
   const parametros = new URLSearchParams({ origin, destination, criteria });
+
   if (criteria === "balanceada") {
-    parametros.set("alpha", inputAlpha.value);
-    parametros.set("beta", inputBeta.value);
+    const alpha = Number(inputAlpha.value);
+    const beta = Number(inputBeta.value);
+
+    const fueraDeRango = (valor) => Number.isNaN(valor) || valor < 0 || valor > 1;
+    if (fueraDeRango(alpha) || fueraDeRango(beta)) {
+      divError.textContent = "Alpha y Beta deben ser numeros entre 0 y 1.";
+      return;
+    }
+
+    parametros.set("alpha", alpha);
+    parametros.set("beta", beta);
   }
 
   try {

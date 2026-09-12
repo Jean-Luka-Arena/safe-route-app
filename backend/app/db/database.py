@@ -8,7 +8,7 @@ load_dotenv()
 
 DATABASE_URL = os.environ.get(
     "DATABASE_URL",
-    "postgresql://safe_route:safe_route@localhost:5432/safe_route",
+    "postgresql://safe_route:safe_route@localhost:5433/safe_route",
 )
 
 engine = create_engine(DATABASE_URL)

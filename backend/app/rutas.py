@@ -13,14 +13,20 @@ router = APIRouter()
 
 @router.get("/route")
 def calcular_ruta_endpoint(
-    origin: int = Query(..., description="Id de la ubicacion de origen"),
-    destination: int = Query(..., description="Id de la ubicacion de destino"),
+    origin: int = Query(..., description="Id de la ubicación de origen"),
+    destination: int = Query(..., description="Id de la ubicación de destino"),
     criteria: str = Query(..., description=f"Uno de: {', '.join(CRITERIOS_VALIDOS)}"),
     alpha: Optional[float] = Query(
-        None, description="Peso de la distancia (solo si criteria=balanceada)"
+        None,
+        ge=0,
+        le=1,
+        description="Peso de la distancia, entre 0 y 1 (solo si criteria=balanceada)",
     ),
     beta: Optional[float] = Query(
-        None, description="Peso del riesgo (solo si criteria=balanceada)"
+        None,
+        ge=0,
+        le=1,
+        description="Peso del riesgo, entre 0 y 1 (solo si criteria=balanceada)",
     ),
     sesion: Session = Depends(obtener_sesion),
 ):

@@ -81,7 +81,7 @@ def test_costo_balanceado_alpha_0_beta_1_equivale_a_riesgo_puro():
 def test_costo_balanceado_combina_ambos_criterios():
     a = AtributosCalle(distancia=100, seguridad=4)
     # riesgo = 6
-    assert costo_balanceado(a, alpha=0.5, beta=2) == 0.5 * 100 + 2 * 6
+    assert costo_balanceado(a, alpha=0.5, beta=0.8) == 0.5 * 100 + 0.8 * 6
 
 
 def test_costo_balanceado_alpha_negativo_invalido():
@@ -96,13 +96,25 @@ def test_costo_balanceado_beta_negativo_invalido():
         costo_balanceado(a, alpha=1, beta=-1)
 
 
+def test_costo_balanceado_alpha_mayor_a_uno_invalido():
+    a = AtributosCalle(distancia=100, seguridad=4)
+    with pytest.raises(ValueError):
+        costo_balanceado(a, alpha=1.5, beta=0.5)
+
+
+def test_costo_balanceado_beta_mayor_a_uno_invalido():
+    a = AtributosCalle(distancia=100, seguridad=4)
+    with pytest.raises(ValueError):
+        costo_balanceado(a, alpha=0.5, beta=1.5)
+
+
 # ---------- hacer_costo_balanceado ----------
 
 
 def test_hacer_costo_balanceado_devuelve_funcion_de_un_solo_argumento():
     a = AtributosCalle(distancia=100, seguridad=4)
-    funcion_costo = hacer_costo_balanceado(alpha=0.5, beta=2)
-    assert funcion_costo(a) == costo_balanceado(a, alpha=0.5, beta=2)
+    funcion_costo = hacer_costo_balanceado(alpha=0.5, beta=0.8)
+    assert funcion_costo(a) == costo_balanceado(a, alpha=0.5, beta=0.8)
 
 
 def test_distintos_alpha_beta_dan_distintos_costos():

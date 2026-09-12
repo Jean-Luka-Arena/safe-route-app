@@ -8,10 +8,9 @@ services:
       POSTGRES_USER: safe_route
       POSTGRES_PASSWORD: safe_route
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
- 
+
 volumes:
   db_data:
- 

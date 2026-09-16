@@ -4,30 +4,12 @@ from app.tda_grafo.excepciones import UbicacionInexistente
 
 
 def dijkstra(ciudad, origen, destino, funcion_costo):
-    """Calcula el camino de costo mínimo entre origen y destino en una
-    GrafoCiudad, usando el algoritmo de Dijkstra.
-
-    Args:
-        ciudad: instancia de GrafoCiudad.
-        origen: ubicación de origen.
-        destino: ubicación de destino.
-        funcion_costo: función que recibe un AtributosCalle y devuelve
-            un número >= 0 (el costo de esa calle).
-
-    Returns:
-        Una tupla (camino, costo_total):
-        - camino: lista de ubicaciones desde origen hasta destino (ambos
-          incluidos), en orden. None si no existe camino.
-        - costo_total: suma de costos de las calles recorridas.
-          float("inf") si no existe camino.
+    """Uso algoritmo de Dijkstra para hallar camino minimo de manera optima.
 
     Complejidad (con heap binario):
         Tiempo: O((V + E) log V), con V = cantidad de ubicaciones y
         E = cantidad de calles.
         Espacio: O(V + E).
-
-    Precondición: funcion_costo debe devolver siempre valores >= 0.
-    Dijkstra no da resultados correctos con costos negativos.
     """
     if not ciudad.existe_ubicacion(origen):
         raise UbicacionInexistente(origen)

@@ -11,6 +11,10 @@ DATABASE_URL = os.environ.get(
     "postgresql://safe_route:safe_route@localhost:5433/safe_route",
 )
 
+SECRET_KEY = os.environ.get("SECRET_KEY", "cambiar-esto-en-produccion")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+
 engine = create_engine(DATABASE_URL)
 
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False)

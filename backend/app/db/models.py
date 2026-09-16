@@ -47,6 +47,20 @@ class Conexion(Base):
         )
 
 
+class Usuario(Base):
+    __tablename__ = "usuarios"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    fecha_creacion: Mapped[datetime.datetime] = mapped_column(
+        DateTime, nullable=False, default=_ahora_utc
+    )
+
+    def __repr__(self):
+        return f"Usuario(id={self.id}, email={self.email})"
+
+
 class Incidente(Base):
     __tablename__ = "incidentes"
 

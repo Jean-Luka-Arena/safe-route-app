@@ -7,7 +7,10 @@ from app.db.models import Ubicacion, Conexion, Usuario
 from app.schemas import TipoIncidente
 from app.services.incidentes_service import (
     reportar_incidente,
+    borrar_incidente,
     ConexionInexistente,
+    IncidenteInexistente,
+    NoAutorizado,
     GRAVEDAD_POR_TIPO,
 )
 
@@ -30,6 +33,7 @@ def sesion_con_calle_y_usuario():
         Conexion(id=1, origen_id=1, destino_id=2, distancia=100, nivel_seguridad=9)
     )
     sesion.add(Usuario(id=1, email="a@a.com", password_hash="x"))
+    sesion.add(Usuario(id=2, email="b@b.com", password_hash="x"))
     sesion.commit()
 
     yield sesion
@@ -65,3 +69,23 @@ def test_incidente_queda_persistido_con_su_usuario(sesion_con_calle_y_usuario):
     guardados = sesion_con_calle_y_usuario.query(Incidente).all()
     assert len(guardados) == 1
     assert guardados[0].usuario_id == 1
+
+
+def test_borrar_incidente_propio(sesion_con_calle_y_usuario):
+    incidente = reportar_incidente(sesion_con_calle_y_usuario, 1, 1, TipoIncidente.ROBO)
+    borrar_incidente(sesion_con_calle_y_usuario, incidente.id, 1)
+
+    from app.db.models import Incidente
+
+    assert sesion_con_calle_y_usuario.get(Incidente, incidente.id) is None
+
+
+def test_borrar_incidente_de_otro_usuario_lanza_excepcion(sesion_con_calle_y_usuario):
+    incidente = reportar_incidente(sesion_con_calle_y_usuario, 1, 1, TipoIncidente.ROBO)
+    with pytest.raises(NoAutorizado):
+        borrar_incidente(sesion_con_calle_y_usuario, incidente.id, 2)
+
+
+def test_borrar_incidente_inexistente_lanza_excepcion(sesion_con_calle_y_usuario):
+    with pytest.raises(IncidenteInexistente):
+        borrar_incidente(sesion_con_calle_y_usuario, 999, 1)

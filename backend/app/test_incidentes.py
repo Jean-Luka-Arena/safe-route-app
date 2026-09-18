@@ -107,3 +107,24 @@ def test_sin_autenticar_devuelve_401():
         "/incidents", json={"conexion_id": 1, "tipo": "robo"}
     )
     assert respuesta.status_code == 401
+
+
+def test_borrar_incidente_propio_devuelve_204(client):
+    creado = client.post("/incidents", json={"conexion_id": 1, "tipo": "robo"}).json()
+    respuesta = client.delete(f"/incidents/{creado['id']}")
+    assert respuesta.status_code == 204
+
+
+def test_borrar_incidente_de_otro_usuario_devuelve_403(client):
+    creado = client.post("/incidents", json={"conexion_id": 1, "tipo": "robo"}).json()
+
+    otro_usuario = Usuario(id=2, email="b@b.com", password_hash="x")
+    client.app.dependency_overrides[obtener_usuario_actual] = lambda: otro_usuario
+
+    respuesta = client.delete(f"/incidents/{creado['id']}")
+    assert respuesta.status_code == 403
+
+
+def test_borrar_incidente_inexistente_devuelve_404(client):
+    respuesta = client.delete("/incidents/999")
+    assert respuesta.status_code == 404

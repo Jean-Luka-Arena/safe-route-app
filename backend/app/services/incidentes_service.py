@@ -11,6 +11,16 @@ class ConexionInexistente(Exception):
         super().__init__(f"la calle con id {conexion_id} no existe")
 
 
+class IncidenteInexistente(Exception):
+    def __init__(self, incidente_id):
+        self.incidente_id = incidente_id
+        super().__init__(f"el incidente con id {incidente_id} no existe")
+
+
+class NoAutorizado(Exception):
+    pass
+
+
 GRAVEDAD_POR_TIPO = {
     TipoIncidente.ROBO: 8,
     TipoIncidente.ACCIDENTE: 7,
@@ -36,3 +46,15 @@ def reportar_incidente(sesion, conexion_id, usuario_id, tipo, fecha=None):
     sesion.refresh(incidente)
 
     return incidente
+
+
+def borrar_incidente(sesion, incidente_id, usuario_id):
+    incidente = sesion.get(Incidente, incidente_id)
+    if incidente is None:
+        raise IncidenteInexistente(incidente_id)
+
+    if incidente.usuario_id != usuario_id:
+        raise NoAutorizado()
+
+    sesion.delete(incidente)
+    sesion.commit()

@@ -5,7 +5,13 @@ from app.db.database import obtener_sesion
 from app.db.models import Usuario
 from app.dependencias import obtener_usuario_actual
 from app.schemas import IncidenteCrear
-from app.services.incidentes_service import reportar_incidente, ConexionInexistente
+from app.services.incidentes_service import (
+    reportar_incidente,
+    borrar_incidente,
+    ConexionInexistente,
+    IncidenteInexistente,
+    NoAutorizado,
+)
 
 router = APIRouter()
 
@@ -31,3 +37,19 @@ def reportar_incidente_endpoint(
         "gravedad": incidente.gravedad,
         "fecha": incidente.fecha,
     }
+
+
+@router.delete("/incidents/{incidente_id}", status_code=204)
+def borrar_incidente_endpoint(
+    incidente_id: int,
+    sesion: Session = Depends(obtener_sesion),
+    usuario: Usuario = Depends(obtener_usuario_actual),
+):
+    try:
+        borrar_incidente(sesion, incidente_id, usuario.id)
+    except IncidenteInexistente as error:
+        raise HTTPException(status_code=404, detail=str(error))
+    except NoAutorizado:
+        raise HTTPException(
+            status_code=403, detail="no podés borrar un reporte que no es tuyo"
+        )

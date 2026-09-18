@@ -68,6 +68,7 @@ class Incidente(Base):
     conexion_id: Mapped[int] = mapped_column(
         ForeignKey("conexiones.id"), nullable=False
     )
+    usuario_id: Mapped[int] = mapped_column(ForeignKey("usuarios.id"), nullable=False)
     tipo: Mapped[str] = mapped_column(String(50), nullable=False)
     fecha: Mapped[datetime.datetime] = mapped_column(
         DateTime, nullable=False, default=_ahora_utc
@@ -75,9 +76,11 @@ class Incidente(Base):
     gravedad: Mapped[float] = mapped_column(Float, nullable=False)
 
     conexion: Mapped["Conexion"] = relationship()
+    usuario: Mapped["Usuario"] = relationship()
 
     def __repr__(self):
         return (
             f"Incidente(id={self.id}, conexion_id={self.conexion_id}, "
-            f"tipo={self.tipo}, gravedad={self.gravedad})"
+            f"usuario_id={self.usuario_id}, tipo={self.tipo}, "
+            f"gravedad={self.gravedad})"
         )

@@ -19,13 +19,14 @@ GRAVEDAD_POR_TIPO = {
 }
 
 
-def reportar_incidente(sesion, conexion_id, tipo, fecha=None):
+def reportar_incidente(sesion, conexion_id, usuario_id, tipo, fecha=None):
     conexion = sesion.get(Conexion, conexion_id)
     if conexion is None:
         raise ConexionInexistente(conexion_id)
 
     incidente = Incidente(
         conexion_id=conexion_id,
+        usuario_id=usuario_id,
         tipo=tipo.value,
         gravedad=GRAVEDAD_POR_TIPO[tipo],
         fecha=fecha or datetime.datetime.now(timezone.utc),

@@ -1,21 +1,21 @@
 from fastapi import Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
 from app.db.database import obtener_sesion
 from app.services.auth_service import obtener_usuario_desde_token, TokenInvalido
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login", auto_error=False)
+bearer_scheme = HTTPBearer(auto_error=False)
 
 
 def obtener_usuario_actual(
-    token: str = Depends(oauth2_scheme),
+    credenciales: HTTPAuthorizationCredentials = Depends(bearer_scheme),
     sesion: Session = Depends(obtener_sesion),
 ):
-    if token is None:
+    if credenciales is None:
         raise HTTPException(status_code=401, detail="no autenticado")
 
     try:
-        return obtener_usuario_desde_token(sesion, token)
+        return obtener_usuario_desde_token(sesion, credenciales.credentials)
     except TokenInvalido:
         raise HTTPException(status_code=401, detail="token inválido o expirado")

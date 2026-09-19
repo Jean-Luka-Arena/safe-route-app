@@ -16,11 +16,12 @@ moverse por la ciudad.
 ## La solución
 
 Safe Route modela la ciudad como un **grafo ponderado**, construido a partir
-de calles reales de OpenStreetMap (hoy, la zona de Vicente López / Olivos):
-cada intersección es un vértice, cada calle una arista con dos atributos,
-distancia y seguridad. Sobre ese grafo corre un algoritmo de caminos mínimos
-(Dijkstra) parametrizado por una **función de costo**, lo que permite
-calcular tres tipos de ruta sin duplicar el algoritmo:
+de calles reales de OpenStreetMap. Hoy cubre **toda la Ciudad Autónoma de
+Buenos Aires** (~30.700 ubicaciones y ~50.700 calles): cada intersección es
+un vértice, cada calle una arista con dos atributos, distancia y seguridad.
+Sobre ese grafo corre un algoritmo de caminos mínimos (Dijkstra) parametrizado
+por una **función de costo**, lo que permite calcular tres tipos de ruta sin
+duplicar el algoritmo:
 
 - **Más corta** — minimiza la distancia total.
 - **Más segura** — minimiza `distancia × riesgo`, con `riesgo = 10 - seguridad`.
@@ -239,7 +240,11 @@ Borrar un incidente que no es tuyo devuelve `403`.
 - **Datos de la ciudad generados, no hardcodeados**: `scripts/generar_seed_desde_osm.py`
   arma `data/seed.json` a partir de datos reales de OpenStreetMap (calles,
   distancias reales por haversine, e iluminación como heurística inicial de
-  seguridad), en vez de mantener datos de prueba a mano.
+  seguridad), en vez de mantener datos de prueba a mano. Se probó primero con
+  un barrio chico (Vicente López / Olivos) y después se escaló a toda CABA:
+  generar los ~81.000 registros tardó ~5 segundos, y cargarlos a Postgres
+  otros ~6 segundos, sin degradar el resto del sistema (tests, cálculo de
+  rutas).
 
 ### Limitaciones conocidas (mejoras futuras)
 
@@ -255,11 +260,17 @@ Borrar un incidente que no es tuyo devuelve `403`.
 - El frontend depende de tres servicios públicos gratuitos (Nominatim, OSRM,
   Overpass), cada uno con límites de uso razonables para una demo pero no
   pensados para tráfico alto.
+- El buscador de direcciones (Nominatim) no siempre encuentra un lugar,
+  aunque exista: no indexa todas las alturas de todas las calles, no conoce
+  apodos o nombres informales (solo el nombre oficial cargado en
+  OpenStreetMap), y la búsqueda está restringida a la zona cubierta por la
+  base (`ZONA` en `frontend/config.js`). Es una limitación del servicio
+  gratuito usado, no del algoritmo de rutas en sí.
 
 ## Estado del proyecto
 
-- [x] Entrega 1 — Núcleo algorítmico (grafo, Dijkstra, funciones de costo)
-- [x] Entrega 2 — Backend (API con FastAPI)
-- [x] Entrega 3 — Base de datos y seguridad dinámica
-- [x] Entrega 4 — Frontend (mapa, búsqueda de direcciones, usuarios, reportes)
-- [ ] Entrega 5 — Docker completo, CI/CD, deploy, demo
+- [x] Etapa 1 — Núcleo algorítmico (grafo, Dijkstra, funciones de costo)
+- [x] Etapa 2 — Backend (API con FastAPI)
+- [x] Etapa 3 — Base de datos y seguridad dinámica
+- [x] Etapa 4 — Frontend (mapa, búsqueda de direcciones, usuarios, reportes)
+- [ ] Etapa 5 — Docker completo, CI/CD, deploy, demo

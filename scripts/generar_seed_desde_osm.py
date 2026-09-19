@@ -20,7 +20,7 @@ import requests
 
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 
-SUR, OESTE, NORTE, ESTE = -34.545, -58.495, -34.505, -58.460
+SUR, OESTE, NORTE, ESTE = -34.705, -58.531, -34.527, -58.335
 
 TIPOS_DE_CALLE = "primary|secondary|tertiary|residential|unclassified|living_street"
 
@@ -29,7 +29,7 @@ RUTA_SALIDA = Path(__file__).resolve().parents[1] / "data" / "seed.json"
 
 def consultar_overpass():
     query = f"""
-    [out:json][timeout:60];
+    [out:json][timeout:180];
     (
       way["highway"~"^({TIPOS_DE_CALLE})$"]({SUR},{OESTE},{NORTE},{ESTE});
     );

@@ -10,7 +10,7 @@ let lineaCalleIncidente = null;
 
 const cacheDirecciones = {};
 
-const mapa = L.map("mapa").setView([-34.525, -58.4775], 14);
+const mapa = L.map("mapa").setView([-34.61, -58.43], 12);
 
 L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
   attribution: "&copy; OpenStreetMap contributors",

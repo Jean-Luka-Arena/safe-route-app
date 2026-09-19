@@ -6,6 +6,7 @@ from app.db.database import Base
 from app.db.models import Ubicacion, Conexion, Usuario
 from app.schemas import TipoIncidente
 from app.services.incidentes_service import (
+    listar_incidentes_de_usuario,
     reportar_incidente,
     borrar_incidente,
     ConexionInexistente,
@@ -89,3 +90,18 @@ def test_borrar_incidente_de_otro_usuario_lanza_excepcion(sesion_con_calle_y_usu
 def test_borrar_incidente_inexistente_lanza_excepcion(sesion_con_calle_y_usuario):
     with pytest.raises(IncidenteInexistente):
         borrar_incidente(sesion_con_calle_y_usuario, 999, 1)
+
+
+def test_listar_incidentes_de_usuario(sesion_con_calle_y_usuario):
+    reportar_incidente(sesion_con_calle_y_usuario, 1, 1, TipoIncidente.ROBO)
+    reportar_incidente(sesion_con_calle_y_usuario, 1, 1, TipoIncidente.ACCIDENTE)
+    reportar_incidente(sesion_con_calle_y_usuario, 1, 2, TipoIncidente.ZONA_OSCURA)
+
+    incidentes = listar_incidentes_de_usuario(sesion_con_calle_y_usuario, 1)
+    assert len(incidentes) == 2
+    assert all(i.usuario_id == 1 for i in incidentes)
+
+
+def test_listar_incidentes_de_usuario_sin_reportes(sesion_con_calle_y_usuario):
+    incidentes = listar_incidentes_de_usuario(sesion_con_calle_y_usuario, 1)
+    assert incidentes == []

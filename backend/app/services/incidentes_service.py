@@ -58,3 +58,12 @@ def borrar_incidente(sesion, incidente_id, usuario_id):
 
     sesion.delete(incidente)
     sesion.commit()
+
+
+def listar_incidentes_de_usuario(sesion, usuario_id):
+    return (
+        sesion.query(Incidente)
+        .filter_by(usuario_id=usuario_id)
+        .order_by(Incidente.fecha.desc())
+        .all()
+    )

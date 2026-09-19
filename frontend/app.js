@@ -415,6 +415,217 @@ async function calcularRuta() {
 
 botonCalcular.addEventListener("click", calcularRuta);
 
+let token = localStorage.getItem("token");
+
+const divCuentaLogueada = document.getElementById("cuenta-logueada");
+const spanCuentaEmail = document.getElementById("cuenta-email");
+const botonCerrarSesion = document.getElementById("cerrar-sesion");
+const detallesCuentaDesconectada = document.getElementById(
+  "cuenta-desconectada"
+);
+const inputCuentaEmail = document.getElementById("cuenta-email-input");
+const inputCuentaPassword = document.getElementById("cuenta-password-input");
+const botonCuentaLogin = document.getElementById("cuenta-login");
+const botonCuentaRegistro = document.getElementById("cuenta-registro");
+const divCuentaError = document.getElementById("cuenta-error");
+const listaMisReportes = document.getElementById("lista-mis-reportes");
+
+function mostrarSesionActiva(email) {
+  divCuentaLogueada.hidden = false;
+  detallesCuentaDesconectada.hidden = true;
+  detallesReporte.hidden = false;
+  spanCuentaEmail.textContent = email;
+  cargarMisReportes();
+}
+
+function mostrarSesionInactiva() {
+  divCuentaLogueada.hidden = true;
+  detallesCuentaDesconectada.hidden = false;
+  detallesReporte.hidden = true;
+  listaMisReportes.innerHTML = "";
+}
+
+function guardarSesion(nuevoToken, email) {
+  token = nuevoToken;
+  localStorage.setItem("token", token);
+  localStorage.setItem("email", email);
+  mostrarSesionActiva(email);
+}
+
+function cerrarSesion() {
+  token = null;
+  localStorage.removeItem("token");
+  localStorage.removeItem("email");
+  mostrarSesionInactiva();
+}
+
+async function intentarLogin(email, password) {
+  const respuesta = await fetch(`${API_BASE_URL}/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const datos = await respuesta.json();
+  return { ok: respuesta.ok, datos };
+}
+
+async function intentarRegistro(email, password) {
+  const respuesta = await fetch(`${API_BASE_URL}/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  const datos = await respuesta.json();
+  return { ok: respuesta.ok, datos };
+}
+
+async function iniciarSesion() {
+  divCuentaError.textContent = "";
+  const email = inputCuentaEmail.value;
+  const password = inputCuentaPassword.value;
+
+  try {
+    const { ok, datos } = await intentarLogin(email, password);
+    if (!ok) {
+      divCuentaError.textContent = formatearDetalleError(datos.detail);
+      return;
+    }
+    guardarSesion(datos.access_token, email);
+  } catch (error) {
+    divCuentaError.textContent = "No se pudo conectar con la API.";
+  }
+}
+
+async function registrarse() {
+  divCuentaError.textContent = "";
+  const email = inputCuentaEmail.value;
+  const password = inputCuentaPassword.value;
+
+  try {
+    const { ok, datos } = await intentarRegistro(email, password);
+    if (!ok) {
+      divCuentaError.textContent = formatearDetalleError(datos.detail);
+      return;
+    }
+    await iniciarSesion();
+  } catch (error) {
+    divCuentaError.textContent = "No se pudo conectar con la API.";
+  }
+}
+
+botonCuentaLogin.addEventListener("click", iniciarSesion);
+botonCuentaRegistro.addEventListener("click", registrarse);
+botonCerrarSesion.addEventListener("click", cerrarSesion);
+
+const modalBienvenida = document.getElementById("bienvenida-modal");
+const inputBienvenidaEmail = document.getElementById("bienvenida-email-input");
+const inputBienvenidaPassword = document.getElementById(
+  "bienvenida-password-input"
+);
+const botonBienvenidaLogin = document.getElementById("bienvenida-login");
+const botonBienvenidaRegistro = document.getElementById("bienvenida-registro");
+const botonBienvenidaInvitado = document.getElementById(
+  "bienvenida-invitado"
+);
+const divBienvenidaError = document.getElementById("bienvenida-error");
+
+function cerrarBienvenida() {
+  modalBienvenida.hidden = true;
+}
+
+async function iniciarSesionDesdeBienvenida() {
+  divBienvenidaError.textContent = "";
+  const email = inputBienvenidaEmail.value;
+  const password = inputBienvenidaPassword.value;
+
+  try {
+    const { ok, datos } = await intentarLogin(email, password);
+    if (!ok) {
+      divBienvenidaError.textContent = formatearDetalleError(datos.detail);
+      return;
+    }
+    guardarSesion(datos.access_token, email);
+    cerrarBienvenida();
+  } catch (error) {
+    divBienvenidaError.textContent = "No se pudo conectar con la API.";
+  }
+}
+
+async function registrarseDesdeBienvenida() {
+  divBienvenidaError.textContent = "";
+  const email = inputBienvenidaEmail.value;
+  const password = inputBienvenidaPassword.value;
+
+  try {
+    const { ok, datos } = await intentarRegistro(email, password);
+    if (!ok) {
+      divBienvenidaError.textContent = formatearDetalleError(datos.detail);
+      return;
+    }
+    const resultadoLogin = await intentarLogin(email, password);
+    if (resultadoLogin.ok) {
+      guardarSesion(resultadoLogin.datos.access_token, email);
+      cerrarBienvenida();
+    }
+  } catch (error) {
+    divBienvenidaError.textContent = "No se pudo conectar con la API.";
+  }
+}
+
+function continuarComoInvitado() {
+  mostrarSesionInactiva();
+  cerrarBienvenida();
+}
+
+botonBienvenidaLogin.addEventListener("click", iniciarSesionDesdeBienvenida);
+botonBienvenidaRegistro.addEventListener(
+  "click",
+  registrarseDesdeBienvenida
+);
+botonBienvenidaInvitado.addEventListener("click", continuarComoInvitado);
+
+async function cargarMisReportes() {
+  if (!token) return;
+
+  try {
+    const respuesta = await fetch(`${API_BASE_URL}/incidents/mine`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!respuesta.ok) return;
+
+    const incidentes = await respuesta.json();
+    renderizarMisReportes(incidentes);
+  } catch (error) {}
+}
+
+function renderizarMisReportes(incidentes) {
+  listaMisReportes.innerHTML = "";
+
+  for (const incidente of incidentes) {
+    const item = document.createElement("li");
+    item.textContent = `${incidente.tipo} (gravedad ${incidente.gravedad})`;
+
+    const botonBorrar = document.createElement("button");
+    botonBorrar.textContent = "Borrar";
+    botonBorrar.addEventListener("click", () => borrarReporte(incidente.id));
+
+    item.appendChild(botonBorrar);
+    listaMisReportes.appendChild(item);
+  }
+}
+
+async function borrarReporte(id) {
+  try {
+    const respuesta = await fetch(`${API_BASE_URL}/incidents/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (respuesta.status === 204) {
+      cargarMisReportes();
+    }
+  } catch (error) {}
+}
+
 const detallesReporte = document.getElementById("detalles-reporte");
 const selectIncidenteTipo = document.getElementById("incidente-tipo");
 const botonEnviarIncidente = document.getElementById("incidente-enviar");
@@ -471,6 +682,11 @@ async function enviarIncidente() {
   divIncidenteError.textContent = "";
   divIncidenteResultado.textContent = "";
 
+  if (!token) {
+    divIncidenteError.textContent = "Iniciá sesión para reportar un incidente.";
+    return;
+  }
+
   if (!seleccionCalleIncidente) {
     divIncidenteError.textContent =
       "Buscá y elegí una dirección de la lista de sugerencias.";
@@ -485,7 +701,10 @@ async function enviarIncidente() {
   try {
     const respuesta = await fetch(`${API_BASE_URL}/incidents`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
       body: JSON.stringify(cuerpo),
     });
     const datos = await respuesta.json();
@@ -498,6 +717,7 @@ async function enviarIncidente() {
     divIncidenteResultado.textContent =
       "¡Gracias! Reporte cargado. La seguridad de esta calle se va a " +
       "ajustar en los próximos cálculos de ruta.";
+    cargarMisReportes();
   } catch (error) {
     divIncidenteError.textContent =
       "No se pudo conectar con la API. ¿Está corriendo el backend?";
@@ -505,6 +725,13 @@ async function enviarIncidente() {
 }
 
 botonEnviarIncidente.addEventListener("click", enviarIncidente);
+
+if (token) {
+  mostrarSesionActiva(localStorage.getItem("email") || "");
+  cerrarBienvenida();
+} else {
+  mostrarSesionInactiva();
+}
 
 cargarUbicaciones().catch(() => {
   divError.textContent =

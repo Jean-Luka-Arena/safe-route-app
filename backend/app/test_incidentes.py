@@ -128,3 +128,20 @@ def test_borrar_incidente_de_otro_usuario_devuelve_403(client):
 def test_borrar_incidente_inexistente_devuelve_404(client):
     respuesta = client.delete("/incidents/999")
     assert respuesta.status_code == 404
+
+
+def test_listar_mis_incidentes(client):
+    client.post("/incidents", json={"conexion_id": 1, "tipo": "robo"})
+    client.post("/incidents", json={"conexion_id": 1, "tipo": "accidente"})
+
+    respuesta = client.get("/incidents/mine")
+    assert respuesta.status_code == 200
+    data = respuesta.json()
+    assert len(data) == 2
+    assert all(i["usuario_id"] == 1 for i in data)
+
+
+def test_listar_mis_incidentes_vacio(client):
+    respuesta = client.get("/incidents/mine")
+    assert respuesta.status_code == 200
+    assert respuesta.json() == []

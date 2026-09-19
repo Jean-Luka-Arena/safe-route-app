@@ -11,6 +11,40 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <div id="bienvenida-modal">
+    <div class="bienvenida-contenido">
+      <h2>Safe Route</h2>
+      <p>Planificá tu ruta según qué tan segura o corta la querés.</p>
+
+      <label>
+        Email
+        <input type="email" id="bienvenida-email-input" autocomplete="off" />
+      </label>
+      <label>
+        Contraseña
+        <input
+          type="password"
+          id="bienvenida-password-input"
+          autocomplete="off"
+        />
+      </label>
+
+      <div class="botones-cuenta">
+        <button id="bienvenida-login">Iniciar sesión</button>
+        <button id="bienvenida-registro">Registrarme</button>
+      </div>
+
+      <div id="bienvenida-error"></div>
+
+      <hr />
+
+      <button id="bienvenida-invitado">Continuar como invitado</button>
+      <p class="bienvenida-nota">
+        Como invitado podés calcular rutas, pero no reportar incidentes.
+      </p>
+    </div>
+  </div>
+
   <header>
     <h1>Safe Route</h1>
     <p>Elegí un origen, un destino y qué te importa más al movilizarte.</p>
@@ -20,6 +54,33 @@
     <div id="mapa"></div>
 
     <aside id="panel">
+      <div id="cuenta-logueada" hidden>
+        <span id="cuenta-email"></span>
+        <button id="cerrar-sesion">Cerrar sesión</button>
+      </div>
+
+      <details id="cuenta-desconectada">
+        <summary>👤 Iniciar sesión / Registrarme</summary>
+
+        <label>
+          Email
+          <input type="email" id="cuenta-email-input" autocomplete="off" />
+        </label>
+        <label>
+          Contraseña
+          <input type="password" id="cuenta-password-input" autocomplete="off" />
+        </label>
+
+        <div class="botones-cuenta">
+          <button id="cuenta-login">Iniciar sesión</button>
+          <button id="cuenta-registro">Registrarme</button>
+        </div>
+
+        <div id="cuenta-error"></div>
+      </details>
+
+      <hr />
+
       <div class="buscador">
         <label>
           Origen
@@ -107,6 +168,11 @@
 
         <div id="incidente-resultado"></div>
         <div id="incidente-error"></div>
+
+        <hr />
+
+        <h3>Mis reportes</h3>
+        <ul id="lista-mis-reportes"></ul>
       </details>
     </aside>
   </main>

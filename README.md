@@ -1,4 +1,4 @@
-![Tests](https://github.com/jeanluka/safe-route-app/actions/workflows/tests.yml/badge.svg)
+![Tests](https://github.com/Jean-Luka-Arena/safe-route-app/actions/workflows/tests.yml/badge.svg)
 
 # Safe Route
 

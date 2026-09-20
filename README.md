@@ -276,3 +276,9 @@ Borrar un incidente que no es tuyo devuelve `403`.
 - [x] Etapa 3 — Base de datos y seguridad dinámica
 - [x] Etapa 4 — Frontend (mapa, búsqueda de direcciones, usuarios, reportes)
 - [ ] Etapa 5 — Docker completo, CI/CD, deploy, demo
+
+# 🗺️ Safe Route App
+
+> 🌐 **Demo en vivo:** [https://safe-route-web.onrender.com](https://safe-route-web.onrender.com)
+
+Aplicación web para el cálculo y visualización de rutas seguras.

@@ -12,5 +12,19 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
 
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: safe_route_backend
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://safe_route:safe_route@db:5432/safe_route
+      SECRET_KEY: ${SECRET_KEY:-cambiar-esto-en-produccion}
+    ports:
+      - "8000:8000"
+
 volumes:
   db_data:

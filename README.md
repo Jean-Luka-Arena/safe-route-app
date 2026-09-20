@@ -1,3 +1,5 @@
+![Tests](https://github.com/jeanluka/safe-route-app/actions/workflows/tests.yml/badge.svg)
+
 # Safe Route
 
 Sistema de planificación de rutas urbanas que, además de la distancia, tiene en

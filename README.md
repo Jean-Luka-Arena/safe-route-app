@@ -238,8 +238,6 @@ Borrar un incidente que no es tuyo devuelve `403`.
   hace un año pesa igual que uno de ayer.
 - La seguridad efectiva no varía según la hora del día, aunque el modelo ya
   guarda fecha y hora completas de cada incidente.
-- `A*` no está implementado (Dijkstra cubre el requisito obligatorio de la
-  consigna).
 - La autenticación es propia (JWT + bcrypt), sin recuperación de contraseña
   ni verificación de email — suficiente para el alcance actual del proyecto,
   no para producción real.

@@ -1,6 +1,12 @@
 ![Tests](https://github.com/Jean-Luka-Arena/safe-route-app/actions/workflows/tests.yml/badge.svg)
 
-# Safe Route
+# 🗺️ Safe Route
+
+> 🌐 **Demo en vivo:** [https://safe-route-web.onrender.com](https://safe-route-web.onrender.com)
+>
+> El backend gratuito de Render "se duerme" tras ~15 min sin uso: el primer
+> pedido después de eso puede tardar hasta ~1 minuto en responder. Es
+> esperable, no un error.
 
 Sistema de planificación de rutas urbanas que, además de la distancia, tiene en
 cuenta un **nivel de seguridad** por calle a la hora de calcular el mejor
@@ -68,7 +74,7 @@ HTTP finita que solo traduce pedidos hacia/desde su service correspondiente.
 
 ```
 safe-route-app/
-├── docker-compose.yml           # levanta PostgreSQL
+├── docker-compose.yml           # levanta PostgreSQL + backend (Docker)
 ├── .env.example                 # variables de entorno (DB + JWT)
 ├── data/
 │   └── seed.json                 # ubicaciones y calles (generado desde OSM)
@@ -80,6 +86,7 @@ safe-route-app/
 │   ├── app.js
 │   └── config.js
 └── backend/
+    ├── Dockerfile
     ├── requirements.txt
     ├── pytest.ini
     └── app/
@@ -104,7 +111,7 @@ safe-route-app/
 |---------------------|------------------------------------------|
 | Lenguaje            | Python 3.12                             |
 | API                 | FastAPI + Uvicorn                        |
-| Base de datos       | PostgreSQL 16                           |
+| Base de datos       | PostgreSQL (Neon, free tier permanente) |
 | ORM                 | SQLAlchemy 2.x                          |
 | Validación          | Pydantic                                |
 | Autenticación       | JWT (PyJWT) + bcrypt                    |
@@ -113,63 +120,38 @@ safe-route-app/
 | Geocodificación     | Nominatim (OpenStreetMap)                |
 | Ruteo visual        | OSRM (dibuja la ruta siguiendo calles)   |
 | Datos de la ciudad  | Overpass API (OpenStreetMap)             |
-| Infraestructura     | Docker / docker-compose                  |
+| Infraestructura     | Docker + Render (backend y frontend)     |
+| CI                  | GitHub Actions (tests en cada push)      |
 
-## Cómo ejecutar el proyecto
+## Cómo ejecutar el proyecto localmente
 
-### 1. Levantar la base de datos
+### 1. Levantar la base de datos y el backend con Docker
 
 ```bash
-docker compose up -d
+docker compose up -d --build
+docker compose exec backend python -m app.db.crear_tablas
+docker compose exec backend python -m app.db.seed
 ```
 
-### 2. Preparar el entorno de Python
+### 2. Correr los tests
 
 ```bash
 cd backend
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-cp ../.env.example ../.env
-```
-
-Editá `.env` y poné una `SECRET_KEY` propia (por ejemplo, generada con
-`python3 -c "import secrets; print(secrets.token_hex(32))"`).
-
-### 3. Generar los datos de la ciudad y cargarlos
-
-```bash
-cd ..
-python scripts/generar_seed_desde_osm.py
-cd backend
-python -m app.db.crear_tablas
-python -m app.db.seed
-```
-
-### 4. Correr los tests
-
-```bash
 pytest -v
 ```
 
-### 5. Levantar la API
-
-```bash
-uvicorn app.main:app --reload
-```
-
-Documentación interactiva en `http://127.0.0.1:8000/docs`.
-
-### 6. Levantar el frontend
-
-En otra terminal:
+### 3. Levantar el frontend
 
 ```bash
 cd frontend
 python3 -m http.server 5500
 ```
 
-Y abrir `http://localhost:5500/index.html`.
+Y abrir `http://localhost:5500/index.html`. La API interactiva queda en
+`http://127.0.0.1:8000/docs`.
 
 ## Uso de la API
 
@@ -245,8 +227,10 @@ Borrar un incidente que no es tuyo devuelve `403`.
   seguridad), en vez de mantener datos de prueba a mano. Se probó primero con
   un barrio chico (Vicente López / Olivos) y después se escaló a toda CABA:
   generar los ~81.000 registros tardó ~5 segundos, y cargarlos a Postgres
-  otros ~6 segundos, sin degradar el resto del sistema (tests, cálculo de
-  rutas).
+  otros ~6 segundos, sin degradar el resto del sistema.
+- **Base de datos separada del hosting del backend**: la Postgres vive en
+  Neon (free tier permanente), no en la base gratuita de Render (que expira
+  a los 30 días). El backend y el frontend sí viven en Render.
 
 ### Limitaciones conocidas (mejoras futuras)
 
@@ -264,10 +248,10 @@ Borrar un incidente que no es tuyo devuelve `403`.
   pensados para tráfico alto.
 - El buscador de direcciones (Nominatim) no siempre encuentra un lugar,
   aunque exista: no indexa todas las alturas de todas las calles, no conoce
-  apodos o nombres informales (solo el nombre oficial cargado en
-  OpenStreetMap), y la búsqueda está restringida a la zona cubierta por la
-  base (`ZONA` en `frontend/config.js`). Es una limitación del servicio
-  gratuito usado, no del algoritmo de rutas en sí.
+  apodos o nombres informales, y la búsqueda está restringida a la zona
+  cubierta por la base (`ZONA` en `frontend/config.js`).
+- El backend en Render (plan gratuito) se duerme tras ~15 min de
+  inactividad; el primer pedido después de eso tarda hasta ~1 minuto.
 
 ## Estado del proyecto
 
@@ -275,10 +259,4 @@ Borrar un incidente que no es tuyo devuelve `403`.
 - [x] Etapa 2 — Backend (API con FastAPI)
 - [x] Etapa 3 — Base de datos y seguridad dinámica
 - [x] Etapa 4 — Frontend (mapa, búsqueda de direcciones, usuarios, reportes)
-- [ ] Etapa 5 — Docker completo, CI/CD, deploy, demo
-
-# 🗺️ Safe Route App
-
-> 🌐 **Demo en vivo:** [https://safe-route-web.onrender.com](https://safe-route-web.onrender.com)
-
-Aplicación web para el cálculo y visualización de rutas seguras.
+- [x] Etapa 5 — Docker, CI (GitHub Actions) y deploy público (Render + Neon)

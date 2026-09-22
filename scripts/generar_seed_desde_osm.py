@@ -1,17 +1,3 @@
-"""
-genera data/seed.json a partir de calles reales de OpenStreetMap (via
-Overpass API), para la zona de Vicente López / Olivos, Buenos Aires (mi barrio :) ).
-
-Uso:
-    python scripts/generar_seed_desde_osm.py
-
-requiere la libreria `requests`.
-
-Nota: este script consulta un servicio publico y gratuito (Overpass
-API). Evita correrlo repetidas veces sin necesidad, por respeto a su
-politica de uso justo.
-"""
-
 import json
 import math
 from pathlib import Path
